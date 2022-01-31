@@ -1,0 +1,27 @@
+dropped messages: 1/1000
+network latency: 0..15 sec
+
+11 replicas
+cnt,0,15,views
+1,882,1995,2
+2,1764,3864,2
+3,2646,4074,2
+4,3528,4893,2
+5,4410,9849,3
+6,5271,11004,3
+7,6174,16758,4
+
+time complexity:
+client broadcast: n
+backups broadcast: n^2
+primary pre-prepare n
+prepare n^2
+commit n^2
+reply to client n
+
+network-intensive algorithm (n^2 messages)
+total: n + n^2 + n + n^2 + n^2 + n = 3*n^2 + 3n = 3n(n + 1) = 1,260
+
+replicas,pre-prepare,prepare,commit,response,total
+11,
+
