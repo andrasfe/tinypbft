@@ -87,6 +87,12 @@ class NetworkMap:
     def broadcast(self, function_name, args):
         self._key_lock.acquire()
         for node in self.get_shuffled_lead_nodes():
+            # exclude the sender. 
+            signature = args['signature']
+
+            if signature.pk == node.get_pk():
+                continue
+
             self.tasks.put(Task(node, function_name, args))
         self._key_lock.release()
 

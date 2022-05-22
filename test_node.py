@@ -47,12 +47,15 @@ class TestNode(unittest.TestCase):
         self.assertTrue(len(node3.get_node().prepared_messages.get_all()) > 0)
 
     def test_NodeImpl_faulty_window(self):
-        F = 4
-        BACKUP_CNT = 39
-        FAULTY_TIMEOUT =1
-        NETWORK_DELAY=2
-        DROP_RATIO=1
-        REQUEST_CNT = 5
+        # Random: 4,39,1,2,1,5, False
+        # Single: 3,10,0,0,0,1, False
+
+        F = 3
+        BACKUP_CNT = 10
+        FAULTY_TIMEOUT =0
+        NETWORK_DELAY=0
+        DROP_RATIO=0
+        REQUEST_CNT = 1
         DISABLE_PRIMARY = False
 
         config = util.Config(FAULTY_TIMEOUT, F)

@@ -21,7 +21,7 @@ Install `aiologger`: `pip install aiologger`
 # TODO: 
 * Move collection classes from `util.py` to `db.py`
 * Trigger view change after every X requests; currently the primary is only changed when the faulty timer kicks in
-* use tynirpc or gRPC to make the application distributed.
+* use tinyrpc or gRPC to make the application distributed.
 * The Signature is just a shell for now. Decide when to use signature versus MAC for improved performance.
 * Replace the collection classes with in-memory datatase, for better performance.
 * 100% unit test coverage
