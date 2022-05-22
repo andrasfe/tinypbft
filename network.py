@@ -1,9 +1,7 @@
 import imp
 import time
 import random
-from types import coroutine
 from node_stub import NodeStub
-from concurrent.futures import ThreadPoolExecutor
 import asyncio
 from threading import Thread, Lock
 import queue

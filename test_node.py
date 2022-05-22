@@ -7,6 +7,7 @@ import util
 import asyncio
 import client
 import network as nw
+import json
 
 
 id1 = util.Id('sk123', 'primary6799')
@@ -46,44 +47,73 @@ class TestNode(unittest.TestCase):
         node3 = list(nm.get_lead_nodes().values())[2]
         self.assertTrue(len(node3.get_node().prepared_messages.get_all()) > 0)
 
-    def test_NodeImpl_faulty_window(self):
+    def test_aggregation(self):
+        REPEAT_TEST = 5
+        agg_dict = {}
+        for i in range(9, 100):
+            run_times = []
+            counter_dict = {}
+            for j in range(REPEAT_TEST):
+                counter_dict = self.test_NodeImpl_faulty_window(backup_cnt=i, request_cnt=1, faulty_timeout=30)
+                run_times.append(counter_dict['avg_duration'])
+            run_times.sort()
+            counter_dict['avg_duration'] = run_times[1]
+            agg_dict[i] = counter_dict
+            print(counter_dict)
+        with open("test_aggregation_faultless.txt", "w") as f:
+            json.dump(agg_dict, f)
+
+    def test_NodeImpl_faulty_window(self, request_cnt = 1, faulty_count = 3, backup_cnt = 9, 
+        faulty_timeout =0, network_delay = 0, drop_ratio = 0, client_patience=15, disable_primary = False):
         # Random: 4,39,1,2,1,5, False
         # Single: 3,10,0,0,0,1, False
 
-        F = 3
-        BACKUP_CNT = 10
-        FAULTY_TIMEOUT =0
-        NETWORK_DELAY=0
-        DROP_RATIO=0
-        REQUEST_CNT = 1
-        DISABLE_PRIMARY = False
-
-        config = util.Config(FAULTY_TIMEOUT, F)
+        config = util.Config(faulty_timeout, faulty_count, client_patience=client_patience)
         nm = nw.NetworkMap(config, 
-            network_delay=NETWORK_DELAY, 
-            drop_ratio=DROP_RATIO,
-            disable_primary=DISABLE_PRIMARY)
+            network_delay=network_delay, 
+            drop_ratio=drop_ratio,
+            disable_primary=disable_primary)
         node1 = NodeImpl(id1, config, nm, None, NODE_TYPE.PRIMARY)
         node_stub = list(nm.get_lead_nodes().values())[0]
 
 
-        for i in range(BACKUP_CNT):
+        for i in range(backup_cnt):
             id = util.Id('sk' + str(i), 'backup' + str(i))
             node = NodeImpl(id, config, nm, node_stub, NODE_TYPE.BACKUP)
 
         client1 = client.Client(util.Id('666', 'client777'), config, nm)
 
-        for i in range(REQUEST_CNT):
-            coroutine = client1.submit_request(util.Request('client request ' + str(i), 'client777'))
+        requests = []
+
+        for i in range(request_cnt):
+            request = util.Request('client request ' + str(i), 'client777')
+            requests.append(request)
+            coroutine = client1.submit_request(request)
             loop.run_until_complete(coroutine)   
             time.sleep(0.5) 
 
         time.sleep(5)
         nm.shutdown()
 
-        print('total messages', nm.get_counter())
+        counter_dict = nm.get_counter()
+        counter_dict['backup_cnt'] = backup_cnt
+
+        avg_duration = 0
+
+        for request in requests:
+            key = str(request.payload)
+            avg_duration += client1.get_duration(key)
+
+        avg_duration = avg_duration/len(requests)
+
+        counter_dict['avg_duration'] = avg_duration
+
+        return counter_dict
         
 if __name__ == '__main__':
     tn = TestNode()
     # tn.test_NodeImpl_client_request()
-    tn.test_NodeImpl_faulty_window()
+    # tn.test_NodeImpl_faulty_window(backup_cnt=i, request_cnt=1, faulty_timeout=30)
+
+    tn.test_aggregation()
+            
