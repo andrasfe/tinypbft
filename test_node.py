@@ -51,7 +51,7 @@ class TestNode(unittest.TestCase):
         BACKUP_CNT = 39
         FAULTY_TIMEOUT =1
         NETWORK_DELAY=2
-        DROP_RATIO=0
+        DROP_RATIO=1
         REQUEST_CNT = 5
         DISABLE_PRIMARY = False
 
@@ -82,5 +82,5 @@ class TestNode(unittest.TestCase):
         
 if __name__ == '__main__':
     tn = TestNode()
-    tn.test_NodeImpl_client_request()
-    # tn.test_NodeImpl_faulty_window()
+    # tn.test_NodeImpl_client_request()
+    tn.test_NodeImpl_faulty_window()

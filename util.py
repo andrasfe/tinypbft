@@ -35,9 +35,10 @@ class Id:
         return Signature(self.pk, self.sk, data) 
 
 class Config:
-    def __init__(self, faulty_time, faulty_cnt):
+    def __init__(self, faulty_time, faulty_cnt, client_patience = 2):
         self.faulty_time = faulty_time
         self.faulty_cnt = faulty_cnt
+        self.client_patience = client_patience
 
 class ClientRequests:
     def __init__(self, config):

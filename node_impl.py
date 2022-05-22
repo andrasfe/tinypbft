@@ -134,6 +134,7 @@ class NodeImpl(Node):
                 signature = await self.__sign(sign_response_body)
                 node = self.network_map.get_node(request.pk)
                 self.network_map.send_to_node(node, 'send_response', {
+                    'view': view,
                     'request': request,
                     'response': response,
                     'signature': signature
