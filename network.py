@@ -27,7 +27,7 @@ class Task:
         return ret
 
 class NetworkMap:
-    def __init__(self, config, network_delay = 0, drop_ratio = 0, disable_primary = False) -> None:
+    def __init__(self, config, network_delay = 0, drop_ratio = 0, disable_primary = False, byzantine_node_cnt = 0) -> None:
         self.config = config
         self.lead_nodes = {}
         self.client_nodes = {}
@@ -39,6 +39,8 @@ class NetworkMap:
         self.tasks = queue.Queue()
         self.stop = False
         self.workers = []
+        self.byzantine_node_cnt = byzantine_node_cnt
+        self.current_byzantine_cnt = 0
 
         for i in range(THREAD_COUNT):
             worker = Thread(target=self.__send_events, daemon=True)
@@ -55,9 +57,15 @@ class NetworkMap:
         self.network_delay = network_delay
 
     def register_lead(self, node, signature):
+        is_byzantine = random.randint(1, 3) == 2 and self.byzantine_node_cnt > self.current_byzantine_cnt
+
+        if is_byzantine:
+            self.current_byzantine_cnt += 1
+            
+
         signature.validate('aaa')
         self.lead_nodes[signature.pk] = NodeStub(node, config=self.config, network_delay=self.network_delay, \
-            disable_primary = self.disable_primary, drop_ratio=self.drop_ratio)
+            disable_primary = self.disable_primary, drop_ratio=self.drop_ratio, byzantine=is_byzantine)
 
     def register_client(self, node, signature):
         signature.validate('some data')

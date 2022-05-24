@@ -48,23 +48,27 @@ class TestNode(unittest.TestCase):
         self.assertTrue(len(node3.get_node().prepared_messages.get_all()) > 0)
 
     def test_aggregation(self):
-        REPEAT_TEST = 5
+        REPEAT_TEST = 3
+
         agg_dict = {}
-        for i in range(9, 100):
-            run_times = []
-            counter_dict = {}
-            for j in range(REPEAT_TEST):
-                counter_dict = self.test_NodeImpl_faulty_window(backup_cnt=i, request_cnt=1, faulty_timeout=30)
-                run_times.append(counter_dict['avg_duration'])
-            run_times.sort()
-            counter_dict['avg_duration'] = run_times[1]
-            agg_dict[i] = counter_dict
-            print(counter_dict)
-        with open("test_aggregation_faultless.txt", "w") as f:
+        for bc in range(1, 4):
+            for i in range(9, 100):
+                byzantine_node_cnt = round(bc*i/9)
+                run_times = []
+                counter_dict = {}
+                for j in range(REPEAT_TEST):
+                    counter_dict = self.test_NodeImpl_faulty_window(backup_cnt=i, request_cnt=1, faulty_timeout=2, byzantine_node_cnt=byzantine_node_cnt)
+                    run_times.append(counter_dict['avg_duration'])
+                run_times.sort()
+                counter_dict['avg_duration'] = run_times[1]
+                counter_dict['byzantine_cnt'] = byzantine_node_cnt
+                agg_dict[i] = counter_dict
+                print(counter_dict)
+        with open("test_aggregation_bc.txt", "w") as f:
             json.dump(agg_dict, f)
 
     def test_NodeImpl_faulty_window(self, request_cnt = 1, faulty_count = 3, backup_cnt = 9, 
-        faulty_timeout =0, network_delay = 0, drop_ratio = 0, client_patience=15, disable_primary = False):
+        faulty_timeout = 0, network_delay = 0, drop_ratio = 0, client_patience=2, disable_primary = False, byzantine_node_cnt = 0):
         # Random: 4,39,1,2,1,5, False
         # Single: 3,10,0,0,0,1, False
 
@@ -72,7 +76,8 @@ class TestNode(unittest.TestCase):
         nm = nw.NetworkMap(config, 
             network_delay=network_delay, 
             drop_ratio=drop_ratio,
-            disable_primary=disable_primary)
+            disable_primary=disable_primary,
+            byzantine_node_cnt=byzantine_node_cnt)
         node1 = NodeImpl(id1, config, nm, None, NODE_TYPE.PRIMARY)
         node_stub = list(nm.get_lead_nodes().values())[0]
 
@@ -92,19 +97,33 @@ class TestNode(unittest.TestCase):
             loop.run_until_complete(coroutine)   
             time.sleep(0.5) 
 
-        time.sleep(5)
+        m= 60
+        key = str(requests[0].payload)
+        while m > 0 and client1.get_duration(key) is None:
+            m = m - 1
+            time.sleep(1)
+
         nm.shutdown()
 
         counter_dict = nm.get_counter()
         counter_dict['backup_cnt'] = backup_cnt
 
         avg_duration = 0
+        len_requests = len(requests)
 
         for request in requests:
             key = str(request.payload)
-            avg_duration += client1.get_duration(key)
+            avg_duration = client1.get_duration(key)
 
-        avg_duration = avg_duration/len(requests)
+            if avg_duration is not None:
+                avg_duration += client1.get_duration(key)
+            else:
+                len_requests = len_requests - 1
+
+        if len_requests > 0:
+            avg_duration = avg_duration/len_requests
+        else:
+            avg_duration = -1
 
         counter_dict['avg_duration'] = avg_duration
 
@@ -116,4 +135,6 @@ if __name__ == '__main__':
     # tn.test_NodeImpl_faulty_window(backup_cnt=i, request_cnt=1, faulty_timeout=30)
 
     tn.test_aggregation()
+
+    # tn.test_NodeImpl_faulty_window(request_cnt=5, faulty_timeout = 1, drop_ratio = 1, network_delay = 2, backup_cnt=39)
             

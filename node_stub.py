@@ -6,7 +6,7 @@ import node
 import random
 
 class NodeStub(node.Node):
-    def __init__(self, node, config = None, network_delay = 0, disable_primary = False, drop_ratio = 0):
+    def __init__(self, node, config = None, network_delay = 0, disable_primary = False, drop_ratio = 0, byzantine = False):
         self.node = node
         self.network_delay = network_delay
         self.drop_ratio = drop_ratio
@@ -15,6 +15,7 @@ class NodeStub(node.Node):
         self._key_lock = Lock()
         # just want to know when we initialize
         self.primary = node.is_primary()
+        self.byzantine = byzantine
 
     def get_node(self):
         return self.node
@@ -40,14 +41,14 @@ class NodeStub(node.Node):
         time.sleep(times*random.randint(0, self.network_delay)/1000)
 
     async def client_request(self, request, signature):
-        if self.__random_drop(True):
+        if self.byzantine or self.__random_drop(True):
             return
 
         await self.node.client_request(request, signature)
 
 
     async def pre_prepare(self, view, sequence, request, signature):
-        if self.__random_drop():
+        if self.byzantine or self.__random_drop():
             return
 
         self.__random_sleep()
@@ -56,7 +57,7 @@ class NodeStub(node.Node):
         self._key_lock.release()
 
     async def prepare(self, view, sequence, request, signature):
-        if self.__random_drop():
+        if self.byzantine or self.__random_drop():
             return
 
         self.__random_sleep()
@@ -66,7 +67,7 @@ class NodeStub(node.Node):
 
 
     async def commit(self, view, sequence, request, signature):
-        if self.__random_drop():
+        if self.byzantine or self.__random_drop():
             return
 
         self.__random_sleep()
@@ -75,7 +76,7 @@ class NodeStub(node.Node):
         self._key_lock.release()
 
     async def view_change(self, new_view, prepared_certs, signature):
-        if self.__random_drop():
+        if self.byzantine or self.__random_drop():
             return
 
         self.__random_sleep()
@@ -84,7 +85,7 @@ class NodeStub(node.Node):
         self._key_lock.release()    
 
     async def new_view(self, new_view, omicron, theta, signature):
-        if self.__random_drop():
+        if self.byzantine or self.__random_drop():
             return
 
         self.__random_sleep()

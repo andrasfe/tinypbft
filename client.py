@@ -13,6 +13,7 @@ class Client:
         self.network_map = network_map
         self.config = config
         self.timers = {}
+        self.first_respone = {}
         self.responses = {}
         self.confirmed_results = {}
         signature = util.Signature(id.pk, id.sk, 'some data')
@@ -38,8 +39,8 @@ class Client:
     async def broadcast_request_if_timeout(self, request):
         key = str(request.payload)
         for i in range(self.config.client_patience):
-            sleep(1)
-            if key in self.confirmed_results.keys():
+            sleep(0.1)
+            if key in self.first_respone.keys():
                 return
 
         await self.broadcast_request(request)
@@ -71,12 +72,19 @@ class Client:
         signature.validate(sign_body)
         self.responses[self.__key(request, signature.pk)] = response
         key = str(request.payload)
+
+        if key not in self.first_respone.keys():
+            self.first_respone[key] = time()
+
         if self.__confirmed(request, response) and key not in self.confirmed_results:
             self.view = view
             self.confirmed_results[key] = result
             self.timers[key]['end'] = time()
 
     def get_duration(self, key):
+        if 'end' not in self.timers[key].keys():
+            return None
+
         return self.timers[key]['end'] - self.timers[key]['start']
 
     

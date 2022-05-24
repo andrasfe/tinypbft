@@ -78,6 +78,13 @@ class NodeImpl(Node):
             await self.__primary_pre_prepare(request)
 
     async def  __client_request_backup(self, request):
+            if self.client_requests.timer_faulty(request, self.primary_node.get_pk()):
+                self.faulty_view = self.view
+                print('view change request', self.get_pk(), self.view, request.payload)
+                await self.__request_view_change()
+                self.client_requests.reset_timer(request)
+                return
+
             signature = await self.__sign(self.__sign_client_request_body(request))
             await self.primary_node.client_request(request, signature)
 
@@ -122,12 +129,6 @@ class NodeImpl(Node):
 
         if await self.committed_messages.count_sufficient(view, sequence):
             # has faulty timer expired?
-            if not self.is_primary() and self.client_requests.timer_faulty(request, self.primary_node.get_pk()):
-                self.faulty_view = view
-                print('view change request', self.get_pk(), view, request.payload)
-                await self.__request_view_change()
-                self.client_requests.reset_timer(request)
-                return
             if request.payload != 'None':
                 response = request.payload[::-1]
                 sign_response_body = self.__sign_client_response_body(request, response)
