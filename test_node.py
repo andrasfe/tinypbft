@@ -68,7 +68,8 @@ class TestNode(unittest.TestCase):
             json.dump(agg_dict, f)
 
     def test_NodeImpl_faulty_window(self, request_cnt = 1, faulty_count = 3, backup_cnt = 9, 
-        faulty_timeout = 0, network_delay = 0, drop_ratio = 0, client_patience=2, disable_primary = False, byzantine_node_cnt = 0):
+        faulty_timeout = 0, network_delay = 0, drop_ratio = 0, 
+        client_patience=5, disable_primary = False, byzantine_node_cnt = 0, m=30):
         # Random: 4,39,1,2,1,5, False
         # Single: 3,10,0,0,0,1, False
 
@@ -86,6 +87,8 @@ class TestNode(unittest.TestCase):
             id = util.Id('sk' + str(i), 'backup' + str(i))
             node = NodeImpl(id, config, nm, node_stub, NODE_TYPE.BACKUP)
 
+        nm.set_byzantine(node1.id.pk, True)
+
         client1 = client.Client(util.Id('666', 'client777'), config, nm)
 
         requests = []
@@ -97,7 +100,6 @@ class TestNode(unittest.TestCase):
             loop.run_until_complete(coroutine)   
             time.sleep(0.5) 
 
-        m= 60
         key = str(requests[0].payload)
         while m > 0 and client1.get_duration(key) is None:
             m = m - 1
@@ -132,9 +134,9 @@ class TestNode(unittest.TestCase):
 if __name__ == '__main__':
     tn = TestNode()
     # tn.test_NodeImpl_client_request()
-    # tn.test_NodeImpl_faulty_window(backup_cnt=i, request_cnt=1, faulty_timeout=30)
+    print(tn.test_NodeImpl_faulty_window(faulty_timeout = 1, drop_ratio = 1, network_delay = 2))
 
-    tn.test_aggregation()
+    # tn.test_aggregation()
 
     # tn.test_NodeImpl_faulty_window(request_cnt=5, faulty_timeout = 1, drop_ratio = 1, network_delay = 2, backup_cnt=39)
             

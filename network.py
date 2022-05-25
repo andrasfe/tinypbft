@@ -67,6 +67,9 @@ class NetworkMap:
         self.lead_nodes[signature.pk] = NodeStub(node, config=self.config, network_delay=self.network_delay, \
             disable_primary = self.disable_primary, drop_ratio=self.drop_ratio, byzantine=is_byzantine)
 
+    def set_byzantine(self, key, new_value):
+        self.lead_nodes[key].set_byzantine(new_value)
+
     def register_client(self, node, signature):
         signature.validate('some data')
         self.client_nodes[signature.pk] = node
@@ -106,6 +109,11 @@ class NetworkMap:
         self._key_lock.acquire()
         self.tasks.put(Task(node, function_name, args))
         self._key_lock.release()
+
+    def send_to_primary_for_view(self, view, function_name, args):
+        node = self.get_primary_for_view(view)
+        self.send_to_node(node, function_name, args)
+
 
     def __send_events(self):
         loop = asyncio.new_event_loop()

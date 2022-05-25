@@ -87,6 +87,10 @@ class NodeImpl(Node):
 
             signature = await self.__sign(self.__sign_client_request_body(request))
             await self.primary_node.client_request(request, signature)
+            self.network_map.send_to_primary_for_view(self.view, 'client_request', {
+                'request': request,
+                'signature': signature
+            })
 
     async def client_request(self, request, signature):
         if self.client_requests.has(request):
