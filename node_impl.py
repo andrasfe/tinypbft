@@ -78,26 +78,25 @@ class NodeImpl(Node):
             await self.__primary_pre_prepare(request)
 
     async def  __client_request_backup(self, request):
-            if self.client_requests.timer_faulty(request, self.primary_node.get_pk()):
-                self.faulty_view = self.view
-                print('view change request', self.get_pk(), self.view, request.payload)
-                await self.__request_view_change()
-                self.client_requests.reset_timer(request)
-                return
 
-            signature = await self.__sign(self.__sign_client_request_body(request))
-            await self.primary_node.client_request(request, signature)
-            self.network_map.send_to_primary_for_view(self.view, 'client_request', {
-                'request': request,
-                'signature': signature
-            })
-
-    async def client_request(self, request, signature):
-        if self.client_requests.has(request):
+        if self.client_requests.timer_faulty(request, self.primary_node.get_pk()):
+            self.faulty_view = self.view
+            print('view change request', self.get_pk(), self.view, request.payload)
+            await self.__request_view_change()
+            self.client_requests.reset_timer(request)
             return
 
-        signature.validate(self.__sign_client_request_body(request))
-        self.client_requests.add(request, None if self.is_primary() else self.primary_node.get_pk())
+        signature = await self.__sign(self.__sign_client_request_body(request))
+        await self.primary_node.client_request(request, signature)
+        self.network_map.send_to_primary_for_view(self.view, 'client_request', {
+            'request': request,
+            'signature': signature
+        })
+
+    async def client_request(self, request, signature):
+        if not self.client_requests.has(request):
+            signature.validate(self.__sign_client_request_body(request))
+            self.client_requests.add(request, None if self.is_primary() else self.primary_node.get_pk())
 
         if self.is_primary():
             await self.__client_request_primary(request)

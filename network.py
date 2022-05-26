@@ -114,7 +114,6 @@ class NetworkMap:
         node = self.get_primary_for_view(view)
         self.send_to_node(node, function_name, args)
 
-
     def __send_events(self):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)

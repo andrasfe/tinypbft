@@ -71,8 +71,10 @@ class ClientRequests:
 
         if start_time == 0:
             return False
+
+        faulty = time.time() - start_time > self.config.faulty_time
         
-        return True if time.time() - start_time > self.config.faulty_time else False
+        return faulty
 
     def reset_timer(self, request):
         self.requests[self.__key(request)] = (None, None, request)

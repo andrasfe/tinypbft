@@ -38,10 +38,12 @@ class Client:
 
     async def broadcast_request_if_timeout(self, request):
         key = str(request.payload)
+        
         for i in range(self.config.client_patience):
-            sleep(0.1)
             if key in self.first_respone.keys():
                 return
+            else:
+                sleep(0.3)
 
         await self.broadcast_request(request)
         print('Client: Primary for view:', self.view, 'was faulty. Broadcasting now.')
@@ -49,7 +51,8 @@ class Client:
 
     async def submit_request(self, request):
         await  self.send_to_primary_request(request)
-        await self.broadcast_request_if_timeout(request)
+        for i in range(3):
+            await self.broadcast_request_if_timeout(request)
 
 
     def __key(self, request, pk):

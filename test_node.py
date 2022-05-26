@@ -69,7 +69,7 @@ class TestNode(unittest.TestCase):
 
     def test_NodeImpl_faulty_window(self, request_cnt = 1, faulty_count = 3, backup_cnt = 9, 
         faulty_timeout = 0, network_delay = 0, drop_ratio = 0, 
-        client_patience=5, disable_primary = False, byzantine_node_cnt = 0, m=30):
+        client_patience=1, disable_primary = False, byzantine_node_cnt = 0, m=30):
         # Random: 4,39,1,2,1,5, False
         # Single: 3,10,0,0,0,1, False
 
@@ -134,7 +134,7 @@ class TestNode(unittest.TestCase):
 if __name__ == '__main__':
     tn = TestNode()
     # tn.test_NodeImpl_client_request()
-    print(tn.test_NodeImpl_faulty_window(faulty_timeout = 1, drop_ratio = 1, network_delay = 2))
+    print(tn.test_NodeImpl_faulty_window(faulty_timeout = 1e-5, drop_ratio = 0, network_delay = 0))
 
     # tn.test_aggregation()
 
