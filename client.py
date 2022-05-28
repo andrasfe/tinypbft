@@ -43,7 +43,7 @@ class Client:
             if key in self.first_respone.keys():
                 return
             else:
-                sleep(0.3)
+                sleep(1)
 
         await self.broadcast_request(request)
         print('Client: Primary for view:', self.view, 'was faulty. Broadcasting now.')
