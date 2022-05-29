@@ -73,6 +73,7 @@ class Client:
     async def send_response(self, view, request, response, signature):
         sign_body = str(request.pk) + str(request.payload) + str(response)
         signature.validate(sign_body)
+        self.view = view
         self.responses[self.__key(request, signature.pk)] = response
         key = str(request.payload)
 
@@ -80,7 +81,6 @@ class Client:
             self.first_respone[key] = time()
 
         if self.__confirmed(request, response) and key not in self.confirmed_results:
-            self.view = view
             self.confirmed_results[key] = result
             self.timers[key]['end'] = time()
 

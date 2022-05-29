@@ -46,9 +46,9 @@ class NodeStub(node.Node):
     async def client_request(self, request, signature):
         if self.byzantine or self.__random_drop(True):
             return
-
+        self._key_lock.acquire()
         await self.node.client_request(request, signature)
-
+        self._key_lock.release()
 
     async def pre_prepare(self, view, sequence, request, signature):
         if self.byzantine or self.__random_drop():

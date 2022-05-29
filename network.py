@@ -8,7 +8,7 @@ import queue
 import sys
 import logging
 
-THREAD_COUNT = 10
+THREAD_COUNT = 4
 STR_SEPARATOR = ','
 
 class Task:
@@ -57,7 +57,7 @@ class NetworkMap:
         self.network_delay = network_delay
 
     def register_lead(self, node, signature):
-        is_byzantine = random.randint(1, 3) == 2 and self.byzantine_node_cnt > self.current_byzantine_cnt
+        is_byzantine = self.byzantine_node_cnt > self.current_byzantine_cnt and random.randint(0, self.byzantine_node_cnt - self.current_byzantine_cnt) == 0
 
         if is_byzantine:
             self.current_byzantine_cnt += 1
@@ -80,6 +80,9 @@ class NetworkMap:
 
     def get_node(self, pk):
         return self.client_nodes[pk] if pk in self.client_nodes else self.lead_nodes[pk] 
+
+    def get_current_byzanine_cnt(self):
+        return self.current_byzantine_cnt
 
     def get_primary_for_view(self, new_view):
         node_list = list(self.lead_nodes.values())

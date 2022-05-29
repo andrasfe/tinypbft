@@ -8,6 +8,7 @@ import asyncio
 import client
 import network as nw
 import json
+from threading import Lock
 
 
 id1 = util.Id('sk123', 'primary6799')
@@ -26,6 +27,8 @@ client1 = client.Client(util.Id('666', 'client555'), config, nm)
 client2 = client.Client(util.Id('888', 'client777'), config, nm)
 
 loop = asyncio.get_event_loop()
+key_lock = Lock()
+
 class TestNode(unittest.TestCase):
     def test_NodeImpl_constructor(self):
         self.assertEqual(len(nm.lead_nodes), BACKUP_CNT + 1)
@@ -47,25 +50,38 @@ class TestNode(unittest.TestCase):
         node3 = list(nm.get_lead_nodes().values())[2]
         self.assertTrue(len(node3.get_node().prepared_messages.get_all()) > 0)
 
-    def test_aggregation(self):
+    def test_with_backup_and_byzantine_node_ramp_up(self):
         REPEAT_TEST = 3
-
-        agg_dict = {}
+        SAMPLE_LOWER = 9
+        SAMPLE_UPPER = 20
+        stats = []
         for bc in range(1, 4):
-            for i in range(9, 100):
+            for i in range(SAMPLE_LOWER, SAMPLE_UPPER):
                 byzantine_node_cnt = round(bc*i/9)
-                run_times = []
-                counter_dict = {}
+
                 for j in range(REPEAT_TEST):
+                    key_lock.acquire()
                     counter_dict = self.test_NodeImpl_faulty_window(backup_cnt=i, request_cnt=1, byzantine_node_cnt=byzantine_node_cnt)
-                    run_times.append(counter_dict['avg_duration'])
-                run_times.sort()
-                counter_dict['avg_duration'] = run_times[1]
-                counter_dict['byzantine_cnt'] = byzantine_node_cnt
-                agg_dict[i] = counter_dict
+                    key_lock.release()
+                    counter_dict['idx'] = j
+                    print(counter_dict)
+                    stats.append(counter_dict)
+        with open("test_with_backup_and_byzantine_node_ramp_up_{}_{}_{}.json".format(SAMPLE_LOWER, SAMPLE_UPPER, round(time.time())), "w") as f:
+            json.dump(stats, f)
+
+    def test_with_fixed_backup_and_byzantine_node_ramp_up(self):
+        stats = []
+        for bc in range(0, 9):
+            for i in range(0, 9):
+                counter_dict = {}
+                key_lock.acquire()
+                counter_dict = self.test_NodeImpl_faulty_window(backup_cnt=9, request_cnt=1, faulty_count=0, byzantine_node_cnt=bc)
+                key_lock.release()
+                counter_dict['idx'] = j
                 print(counter_dict)
-        with open("test_aggregation_bc.txt", "w") as f:
-            json.dump(agg_dict, f)
+                stats.append(counter_dict)
+        with open("test_with_fixed_backup_and_byzantine_node_ramp_up.json", "w") as f:
+            json.dump(stats, f)
 
     def test_NodeImpl_faulty_window(self, request_cnt = 1, faulty_count = 3, backup_cnt = 9, 
         faulty_timeout = 0, network_delay = 0, drop_ratio = 0, 
@@ -94,9 +110,10 @@ class TestNode(unittest.TestCase):
         requests = []
 
         for i in range(request_cnt):
-            request = util.Request('client request ' + str(i), 'client777')
+            request = util.Request('client request ' + str(time.time()), 'client777')
             requests.append(request)
             coroutine = client1.submit_request(request)
+            print('request submitted:', request)
             loop.run_until_complete(coroutine)   
             time.sleep(0.5) 
 
@@ -108,6 +125,7 @@ class TestNode(unittest.TestCase):
         nm.shutdown()
 
         counter_dict = nm.get_counter()
+        counter_dict['byzantine_node_cnt'] = nm.get_current_byzanine_cnt()
         counter_dict['backup_cnt'] = backup_cnt
 
         avg_duration = 0
@@ -136,7 +154,7 @@ if __name__ == '__main__':
     # tn.test_NodeImpl_client_request()
     # print(tn.test_NodeImpl_faulty_window(faulty_timeout = 1e-5, drop_ratio = 0, network_delay = 0))
 
-    tn.test_aggregation()
+    tn.test_with_backup_and_byzantine_node_ramp_up()
 
     # tn.test_NodeImpl_faulty_window(request_cnt=5, faulty_timeout = 1, drop_ratio = 1, network_delay = 2, backup_cnt=39)
             
