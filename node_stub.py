@@ -29,6 +29,9 @@ class NodeStub(node.Node):
     def set_byzantine(self, new_value):
         self.byzantine = new_value
 
+    def is_byzantine(self):
+        return self.byzantine
+
     def __random_drop(self, drop_primary = False):
         if drop_primary and self.disable_primary and self.primary:
             return True if random.randint(1, 10) < 5 else False

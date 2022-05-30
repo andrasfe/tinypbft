@@ -71,21 +71,21 @@ class TestNode(unittest.TestCase):
 
     def test_with_fixed_backup_and_byzantine_node_ramp_up(self):
         stats = []
-        for bc in range(0, 9):
-            for i in range(0, 9):
+        for bc in range(3, 9):
+            for i in range(0, 10):
                 counter_dict = {}
                 key_lock.acquire()
-                counter_dict = self.test_NodeImpl_faulty_window(backup_cnt=9, request_cnt=1, faulty_count=0, byzantine_node_cnt=bc)
+                counter_dict = self.test_NodeImpl_faulty_window(backup_cnt=9, request_cnt=1, faulty_count=3, byzantine_node_cnt=bc)
                 key_lock.release()
-                counter_dict['idx'] = j
+                counter_dict['idx'] = '{}-{}'.format(bc, i)
                 print(counter_dict)
                 stats.append(counter_dict)
-        with open("test_with_fixed_backup_and_byzantine_node_ramp_up.json", "w") as f:
+        with open("test_with_fixed_backup_and_byzantine_node_ramp_up_{}.json".format(round(time.time())), "w") as f:
             json.dump(stats, f)
 
     def test_NodeImpl_faulty_window(self, request_cnt = 1, faulty_count = 3, backup_cnt = 9, 
         faulty_timeout = 0, network_delay = 0, drop_ratio = 0, 
-        client_patience=3, disable_primary = False, byzantine_node_cnt = 0, m=30):
+        client_patience=3, disable_primary = False, byzantine_node_cnt = 0, m=15):
         # Random: 4,39,1,2,1,5, False
         # Single: 3,10,0,0,0,1, False
 
@@ -126,7 +126,8 @@ class TestNode(unittest.TestCase):
 
         counter_dict = nm.get_counter()
         counter_dict['byzantine_node_cnt'] = nm.get_current_byzanine_cnt()
-        counter_dict['backup_cnt'] = backup_cnt
+        counter_dict['f'] = config.faulty_cnt
+        counter_dict['backup_cnt'] = backup_cnt + 1
 
         avg_duration = 0
         len_requests = len(requests)
@@ -154,7 +155,9 @@ if __name__ == '__main__':
     # tn.test_NodeImpl_client_request()
     # print(tn.test_NodeImpl_faulty_window(faulty_timeout = 1e-5, drop_ratio = 0, network_delay = 0))
 
-    tn.test_with_backup_and_byzantine_node_ramp_up()
+    # tn.test_with_backup_and_byzantine_node_ramp_up()
+
+    tn.test_with_fixed_backup_and_byzantine_node_ramp_up()
 
     # tn.test_NodeImpl_faulty_window(request_cnt=5, faulty_timeout = 1, drop_ratio = 1, network_delay = 2, backup_cnt=39)
             

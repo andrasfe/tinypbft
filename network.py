@@ -82,7 +82,11 @@ class NetworkMap:
         return self.client_nodes[pk] if pk in self.client_nodes else self.lead_nodes[pk] 
 
     def get_current_byzanine_cnt(self):
-        return self.current_byzantine_cnt
+        cnt = 0
+        for key in self.lead_nodes.keys():
+            if self.lead_nodes[key].is_byzantine():
+                cnt += 1
+        return cnt
 
     def get_primary_for_view(self, new_view):
         node_list = list(self.lead_nodes.values())

@@ -1,3 +1,4 @@
+from distutils.command.config import config
 import time
 import sys
 
@@ -178,14 +179,14 @@ class PreparedMessages:
 
     async def count_sufficient(self, view, sequence):
         total = 0
-        multiplier = 1 if self.commit else 2
 
         # room for optimization
         for key in self.messages:
             if key.startswith(str(view) + SEPARATOR + str(sequence) + SEPARATOR):
                 total += 1
-                if total > multiplier*self.config.faulty_cnt: 
+                if total >= 2*self.config.faulty_cnt - 1:  #+ (1 if self.commit else 0): 
                     return True
+
         return False
 
     @staticmethod

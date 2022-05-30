@@ -1,7 +1,8 @@
+ *.json
 __pycache__/
  *.pyc
  *.txt
  .~*
- *.json
+
 
 
